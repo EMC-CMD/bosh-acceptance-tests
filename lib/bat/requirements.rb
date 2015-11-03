@@ -90,6 +90,8 @@ module Bat
         @logger.info('release already uploaded')
       else
         @logger.info('release not uploaded')
+        puts("what: #{what.inspect}")
+	puts("path: #{what.to_path}")
         expect(@bosh_runner.bosh_safe("upload release #{what.to_path}")).to succeed
       end
     end

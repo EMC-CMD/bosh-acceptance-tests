@@ -12,9 +12,6 @@ describe 'with release and stemcell and two deployments' do
       skip 'only openstack is configurable without ephemeral disk' unless @requirements.stemcell.supports_root_partition?
 
       reload_deployment_spec
-      # using password 'foobar'
-      use_password('$6$tHAu4zCTso$pAQok0MTHP4newel7KMhTzMI4tQrAWwJ.X./fFAKjbWkCb5sAaavygXAspIGWn8qVD8FeT.Z/XN4dvqKzLHhl0')
-      @our_ssh_options = ssh_options.merge(password: 'foobar')
       use_static_ip
       use_vip
       use_job('batlight')
@@ -45,12 +42,12 @@ describe 'with release and stemcell and two deployments' do
     end
 
     def agent_config(ip)
-      output = ssh_sudo(ip, 'vcap', 'cat /var/vcap/bosh/agent.json', @our_ssh_options)
+      output = ssh_sudo(ip, 'vcap', 'cat /var/vcap/bosh/agent.json', ssh_options)
       JSON.parse(output)
     end
 
     def mounts(ip)
-      output = ssh(ip, 'vcap', 'mount', @our_ssh_options)
+      output = ssh(ip, 'vcap', 'mount', ssh_options)
       output.lines.map do |line|
         matches = /(?<point>.*) on (?<path>.*) type (?<type>.*) \((?<options>.*)\)/.match(line)
         next if matches.nil?
@@ -59,7 +56,7 @@ describe 'with release and stemcell and two deployments' do
     end
 
     def swaps(ip)
-      output = ssh(ip, 'vcap', 'swapon -s', @our_ssh_options)
+      output = ssh(ip, 'vcap', 'swapon -s', ssh_options)
       output.lines.to_a[1..-1].map do |line|
         matches = /(?<point>.+)\s+(?<type>.+)\s+(?<size>.+)\s+(?<used>.+)\s+(?<priority>.+)/.match(line)
         next if matches.nil?
@@ -75,9 +72,6 @@ describe 'with release and stemcell and two deployments' do
   context 'first deployment' do
     before(:all) do
       reload_deployment_spec
-      # using password 'foobar'
-      use_password('$6$tHAu4zCTso$pAQok0MTHP4newel7KMhTzMI4tQrAWwJ.X./fFAKjbWkCb5sAaavygXAspIGWn8qVD8FeT.Z/XN4dvqKzLHhl0')
-      @our_ssh_options = ssh_options.merge(password: 'foobar')
       use_static_ip
       use_vip
       @jobs = %w[
@@ -97,7 +91,7 @@ describe 'with release and stemcell and two deployments' do
     end
 
     it 'should set vcap password', ssh: true do
-      expect(ssh_sudo(public_ip, 'vcap', 'whoami', @our_ssh_options)).to eq("root\n")
+      expect(ssh_sudo(public_ip, 'vcap', 'whoami', ssh_options)).to eq("root\n")
     end
 
     it 'should not change the deployment on a noop' do
@@ -112,7 +106,7 @@ describe 'with release and stemcell and two deployments' do
     it 'should use job colocation', ssh: true do
       @jobs.each do |job|
         grep_cmd = "ps -ef | grep #{job} | grep -v grep"
-        expect(ssh(public_ip, 'vcap', grep_cmd, @our_ssh_options)).to match /#{job}/
+        expect(ssh(public_ip, 'vcap', grep_cmd, ssh_options)).to match /#{job}/
       end
     end
 
@@ -120,16 +114,16 @@ describe 'with release and stemcell and two deployments' do
       skip "doesn't work on AWS as the VIP IP isn't visible to the VM" if aws?
       skip "doesn't work on OpenStack as the VIP IP isn't visible to the VM" if openstack?
       skip "doesn't work on Warden as the VIP IP isn't visible to eth0" if warden?
-      expect(ssh(public_ip, 'vcap', '/sbin/ifconfig eth0', @our_ssh_options)).to match /#{static_ip}/
+      expect(ssh(public_ip, 'vcap', '/sbin/ifconfig eth0', ssh_options)).to match /#{static_ip}/
     end
 
     context 'second deployment' do
       SAVE_FILE = '/var/vcap/store/batarang/save'
 
       before(:all) do
-        ssh(public_ip, 'vcap', "echo 'foobar' > #{SAVE_FILE}", @our_ssh_options)
+        ssh(public_ip, 'vcap', "echo 'foobar' > #{SAVE_FILE}", ssh_options)
         unless warden?
-          @size = persistent_disk(public_ip, 'vcap', @our_ssh_options)
+          @size = persistent_disk(public_ip, 'vcap', ssh_options)
         end
         use_persistent_disk(4096)
         @second_deployment_result = @requirements.requirement(deployment, @spec, force: true)
@@ -138,9 +132,9 @@ describe 'with release and stemcell and two deployments' do
       it 'should migrate disk contents', ssh: true do
         # Warden df don't work so skip the persistent disk size check
         unless warden?
-          expect(persistent_disk(public_ip, 'vcap', @our_ssh_options)).to_not eq(@size)
+          expect(persistent_disk(public_ip, 'vcap', ssh_options)).to_not eq(@size)
         end
-        expect(ssh(public_ip, 'vcap', "cat #{SAVE_FILE}", @our_ssh_options)).to match /foobar/
+        expect(ssh(public_ip, 'vcap', "cat #{SAVE_FILE}", ssh_options)).to match /foobar/
       end
     end
   end

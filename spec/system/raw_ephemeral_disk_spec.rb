@@ -15,9 +15,6 @@ describe 'raw_instance_storage' do
     skip 'raw_instance_storage cloud property not supported on this IaaS' unless @requirements.stemcell.supports_raw_ephemeral_storage?
 
     reload_deployment_spec
-    # using password 'foobar'
-    use_password('$6$tHAu4zCTso$pAQok0MTHP4newel7KMhTzMI4tQrAWwJ.X./fFAKjbWkCb5sAaavygXAspIGWn8qVD8FeT.Z/XN4dvqKzLHhl0')
-    @our_ssh_options = ssh_options.merge(password: 'foobar')
     use_static_ip
     use_vip
     use_job('batlight')
@@ -33,7 +30,7 @@ describe 'raw_instance_storage' do
   end
 
   def labeled_partitions(ip)
-    output = ssh(ip, 'vcap', 'ls /dev/disk/by-partlabel', @our_ssh_options)
+    output = ssh(ip, 'vcap', 'ls /dev/disk/by-partlabel', ssh_options)
     output.lines.map { |line| line.chomp }
   end
 end

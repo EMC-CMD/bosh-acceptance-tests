@@ -1,0 +1,105 @@
+---
+name: <%= properties.name || "bat" %>
+director_uuid: <%= properties.uuid %>
+
+releases:
+  - name: bat
+    version: <%= properties.release || "latest" %>
+
+compilation:
+  workers: 1
+  network: default
+  reuse_compilation_vms: true
+  cloud_properties:
+    public_key: "c3NoLXJzYSBBQUFBQjNOemFDMXljMkVBQUFBREFRQUJBQUFCQVFDNklFWnBpOWd3Wi9VUGh0elE4S09VelMwa3ZESzQ4c2V6TDlIN2dQcTNuS3p6aldmcW1JYUZMRHFGazhsbmJJL1haUDJNZXR4OFlsd3JHclFONGRmNHUyWTl4SGhhbEpENFVRcEZyYVZiVVhXZlM4UFE1ZWk2UjJCK0xWUWJCSUhHUE5sOXRyOEtJUzdJeklvZ3lCN3FGQXpHZmxzSU5NclRFL0F5WmpJQS9DUTJMd3VkcnBjekpuN1pEQVNTNEZTeEdkQTFKYU1OMTlxWWFzQUZWZmlDL0dGSHBHQ0tiQysxdnFxbmhFRVJUYjROZnRHdFJjVVlHUnl5bnhCMlVXa3lVZlVTNXNkZUNxb3RJSDhKK0Ywc2VZSVJPMjBjT01HODRkMHJMVklYcEtHbUl5VmRSNGdtLzBXa05GSVp5UGdmdzdYdjVuQnloWUVBWGVpSlVtcW4gZW1jQENGSnVtcE1lZ2FuCg=="
+    instance_type: <%= properties.instance_type || 'm1.small' %>
+    <% if properties.key_name %>
+    key_name: <%= properties.key_name %>
+    <% end %>
+    <% if properties.availability_zone %>
+    availability_zone: <%= properties.availability_zone %>
+    <% end %>
+
+update:
+  canaries: <%= properties.canaries || 1 %>
+  canary_watch_time: 3000-90000
+  update_watch_time: 3000-90000
+  max_in_flight: <%= properties.max_in_flight || 1 %>
+
+networks:
+  <% properties.networks.each do |network| %>
+- name: <%= network.name %>
+  type: <%= network.type %>
+  <% if network.type == 'manual' %>
+  subnets:
+  - range: <%= network.cidr %>
+    reserved:
+      <% network.reserved.each do |range| %>
+      - <%= range %>
+      <% end %>
+    static:
+      <% network.static.each do |range| %>
+      - <%= range %>
+      <% end %>
+    gateway: <%= network.gateway %>
+    dns: <%= p('dns').inspect %>
+  <% else %>
+  dns: <%= p('dns').inspect %>
+  <% end %>
+<% end %>
+
+resource_pools:
+  - name: common
+    network: default
+    size: <%= properties.pool_size %>
+    stemcell:
+      name: <%= properties.stemcell.name %>
+      version: '<%= properties.stemcell.version %>'
+    cloud_properties:
+      public_key: "c3NoLXJzYSBBQUFBQjNOemFDMXljMkVBQUFBREFRQUJBQUFCQVFDNklFWnBpOWd3Wi9VUGh0elE4S09VelMwa3ZESzQ4c2V6TDlIN2dQcTNuS3p6aldmcW1JYUZMRHFGazhsbmJJL1haUDJNZXR4OFlsd3JHclFONGRmNHUyWTl4SGhhbEpENFVRcEZyYVZiVVhXZlM4UFE1ZWk2UjJCK0xWUWJCSUhHUE5sOXRyOEtJUzdJeklvZ3lCN3FGQXpHZmxzSU5NclRFL0F5WmpJQS9DUTJMd3VkcnBjekpuN1pEQVNTNEZTeEdkQTFKYU1OMTlxWWFzQUZWZmlDL0dGSHBHQ0tiQysxdnFxbmhFRVJUYjROZnRHdFJjVVlHUnl5bnhCMlVXa3lVZlVTNXNkZUNxb3RJSDhKK0Ywc2VZSVJPMjBjT01HODRkMHJMVklYcEtHbUl5VmRSNGdtLzBXa05GSVp5UGdmdzdYdjVuQnloWUVBWGVpSlVtcW4gZW1jQENGSnVtcE1lZ2FuCg=="
+jobs:
+  - name: <%= properties.job || "batlight" %>
+    templates: <% (properties.templates || ["batlight"]).each do |template| %>
+    - name: <%= template %>
+    <% end %>
+    instances: 1
+    resource_pool: common
+    <% if properties.persistent_disk %>
+    persistent_disk: <%= properties.persistent_disk %>
+    <% end %>
+    networks:
+    <% properties.job_networks.each_with_index do |network, i| %>
+      - name: <%= network.name %>
+        type: <%= network.type %>
+      <% if properties.use_static_ip %>
+        static_ips:
+        - <%= network.static_ip %>
+      <% end %>
+    <% end %>
+    properties:
+      # Tells agents how to contact nats
+      agent: {mbus: "nats://nats:nats-password@172.31.129.15:4222"}
+
+properties:
+  # mbus: https://mbus:Pbc7ssdfh8w2@172.31.129.15:6868
+  onrack-cpi:
+    apiserver: 10.240.16.85
+    agent:
+      mbus: "nats://nats:nats-password@172.31.129.15:4222"
+      blobstore:
+        provider: dav
+        options:
+          endpoint: http://172.31.129.15:25250
+          user: agent
+          password: agent-password    
+
+  batlight:
+    <% if properties.batlight.fail %>
+    fail: <%= properties.batlight.fail %>
+    <% end %>
+    <% if properties.batlight.missing %>
+    missing: <%= properties.batlight.missing %>
+    <% end %>
+    <% if properties.batlight.drain_type %>
+    drain_type: <%= properties.batlight.drain_type %>
+    <% end %>
