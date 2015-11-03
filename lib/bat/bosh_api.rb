@@ -19,6 +19,7 @@ module Bat
     def releases
       result = []
       http_get('/releases').each do |r|
+        puts("r: #{r.inspect}")
         result << Bat::Release.new(r['name'], r['release_versions'].map { |v| v['version'] })
       end
       result
