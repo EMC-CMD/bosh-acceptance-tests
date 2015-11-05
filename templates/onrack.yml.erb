@@ -78,18 +78,18 @@ jobs:
     <% end %>
     properties:
       # Tells agents how to contact nats
-      agent: {mbus: "nats://nats:nats-password@172.31.129.15:4222"}
+      agent: {mbus: "nats://nats:nats-password@172.31.128.3:4222"}
 
 properties:
   # mbus: https://mbus:Pbc7ssdfh8w2@172.31.129.15:6868
   onrack-cpi:
-    apiserver: 10.240.16.85
+    apiserver: 192.168.10.111
     agent:
-      mbus: "nats://nats:nats-password@172.31.129.15:4222"
+      mbus: "nats://nats:nats-password@172.31.128.3:4222"
       blobstore:
         provider: dav
         options:
-          endpoint: http://172.31.129.15:25250
+          endpoint: http://172.31.128.3:25250
           user: agent
           password: agent-password    
 
