@@ -36,7 +36,7 @@ describe Bat::Release do
       it 'creates a Release named "bat" with versions found in the path specified' do
         release = Bat::Release.from_path(bat_path)
         expect(release.name).to eq('bat')
-        expect(release.sorted_versions).to eq(%w(0 1 1.1-dev 12))
+        expect(release.sorted_versions).to eq(%w(0 1 1.1+dev 12))
         expect(release.path).to eq(bat_path)
       end
     end

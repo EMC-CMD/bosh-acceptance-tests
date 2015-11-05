@@ -8,7 +8,7 @@ releases:
 
 compilation:
   workers: 1
-  network: static
+  network: default
   reuse_compilation_vms: true
   cloud_properties:
     public_key: "c3NoLXJzYSBBQUFBQjNOemFDMXljMkVBQUFBREFRQUJBQUFCQVFDNklFWnBpOWd3Wi9VUGh0elE4S09VelMwa3ZESzQ4c2V6TDlIN2dQcTNuS3p6aldmcW1JYUZMRHFGazhsbmJJL1haUDJNZXR4OFlsd3JHclFONGRmNHUyWTl4SGhhbEpENFVRcEZyYVZiVVhXZlM4UFE1ZWk2UjJCK0xWUWJCSUhHUE5sOXRyOEtJUzdJeklvZ3lCN3FGQXpHZmxzSU5NclRFL0F5WmpJQS9DUTJMd3VkcnBjekpuN1pEQVNTNEZTeEdkQTFKYU1OMTlxWWFzQUZWZmlDL0dGSHBHQ0tiQysxdnFxbmhFRVJUYjROZnRHdFJjVVlHUnl5bnhCMlVXa3lVZlVTNXNkZUNxb3RJSDhKK0Ywc2VZSVJPMjBjT01HODRkMHJMVklYcEtHbUl5VmRSNGdtLzBXa05GSVp5UGdmdzdYdjVuQnloWUVBWGVpSlVtcW4gZW1jQENGSnVtcE1lZ2FuCg=="
@@ -27,18 +27,30 @@ update:
   max_in_flight: <%= properties.max_in_flight || 1 %>
 
 networks:
-- name: static
-  type: manual
-
+  <% properties.networks.each do |network| %>
+- name: <%= network.name %>
+  type: <%= network.type %>
+  <% if network.type == 'manual' %>
   subnets:
-  - range: 172.31.129.0/22
-    gateway: 172.31.128.1
-    reserved: [172.31.128.2-172.31.128.255,172.31.129.1]
-    static: [172.31.129.2-172.31.129.15]
+  - range: <%= network.cidr %>
+    reserved:
+      <% network.reserved.each do |range| %>
+      - <%= range %>
+      <% end %>
+    static:
+      <% network.static.each do |range| %>
+      - <%= range %>
+      <% end %>
+    gateway: <%= network.gateway %>
+    dns: <%= p('dns').inspect %>
+  <% else %>
+  dns: <%= p('dns').inspect %>
+  <% end %>
+<% end %>
 
 resource_pools:
   - name: common
-    network: static
+    network: default
     size: <%= properties.pool_size %>
     stemcell:
       name: <%= properties.stemcell.name %>
@@ -56,9 +68,14 @@ jobs:
     persistent_disk: <%= properties.persistent_disk %>
     <% end %>
     networks:
-      - name: static
+    <% properties.job_networks.each_with_index do |network, i| %>
+      - name: <%= network.name %>
+        type: <%= network.type %>
+      <% if properties.use_static_ip %>
         static_ips:
-        - 172.31.129.7
+        - <%= network.static_ip %>
+      <% end %>
+    <% end %>
     properties:
       # Tells agents how to contact nats
       agent: {mbus: "nats://nats:nats-password@172.31.129.15:4222"}
