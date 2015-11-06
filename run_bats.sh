@@ -36,7 +36,7 @@ properties:
   uuid: $(bosh status --uuid)
   stemcell:
     name: bosh-openstack-kvm-ubuntu-trusty-go_agent-raw
-    version: 3104
+    version: latest
   networks:
   - name: default
     static_ip: ${primary_network_manual_ip}
