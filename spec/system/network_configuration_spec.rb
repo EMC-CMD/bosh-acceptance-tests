@@ -1,4 +1,4 @@
-require 'system/spec_helper'
+# require 'system/spec_helper'
 
 describe 'network configuration' do
   before(:all) do
@@ -76,31 +76,8 @@ describe 'network configuration' do
       skip "not using manual networking" unless manual_networking?
     end
 
-    it 'changes static IP address' do
-      unless @requirements.stemcell.supports_changing_static_ip?(network_type)
-        skip "network reconfiguration does not work for #{@requirements.stemcell}"
-      end
+    it 'changes static IP address', :onrack
 
-      use_second_static_ip
-      deployment = with_deployment
-      expect(bosh("deployment #{deployment.to_path}")).to succeed
-      expect(bosh('deploy')).to succeed
-
-      expect(ssh(public_ip, 'vcap', 'PATH=/sbin:/usr/sbin:$PATH; ifconfig', ssh_options)).to include(second_static_ip)
-    end
-
-    it 'deploys multiple manual networks' do
-      unless @requirements.stemcell.supports_multiple_manual_networks?
-        skip "multiple manual networks are not supported for #{@requirements.stemcell}"
-      end
-
-      use_multiple_manual_networks
-      deployment = with_deployment
-      expect(bosh("deployment #{deployment.to_path}")).to succeed
-      expect(bosh('deploy')).to succeed
-
-      expect(ssh(public_ip, 'vcap', 'PATH=/sbin:/usr/sbin:$PATH; ifconfig', ssh_options)).to include(static_ips[0])
-      expect(ssh(public_ip, 'vcap', 'PATH=/sbin:/usr/sbin:$PATH; ifconfig', ssh_options)).to include(static_ips[1])
-    end
+    it 'deploys multiple manual networks'
   end
 end
