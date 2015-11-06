@@ -22,12 +22,14 @@ check_param primary_network_cidr
 check_param primary_network_gateway
 check_param primary_network_range
 check_param primary_network_manual_ip
+check_param second_static_ip
 
-cat > $BAT_DEPLOYMENT_SPEC <<EOF
+cat > ${BAT_DEPLOYMENT_SPEC} <<EOF
 ---
 cpi: onrack
 properties:
   use_static_ip: true
+  second_static_ip: ${second_static_ip}
   key_name:  bats
   pool_size: 1
   instances: 1
@@ -41,7 +43,7 @@ properties:
     type: manual
     cidr: ${primary_network_cidr}
     reserved: [${bosh_director_private_ip}]
-    static: ${primary_network_range}
+    static: [${primary_network_range}]
     gateway: ${primary_network_gateway}
 EOF
 
