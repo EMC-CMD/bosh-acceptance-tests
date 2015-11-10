@@ -11,7 +11,7 @@ compilation:
   network: default
   reuse_compilation_vms: true
   cloud_properties:
-    public_key: "c3NoLXJzYSBBQUFBQjNOemFDMXljMkVBQUFBREFRQUJBQUFCQVFDNklFWnBpOWd3Wi9VUGh0elE4S09VelMwa3ZESzQ4c2V6TDlIN2dQcTNuS3p6aldmcW1JYUZMRHFGazhsbmJJL1haUDJNZXR4OFlsd3JHclFONGRmNHUyWTl4SGhhbEpENFVRcEZyYVZiVVhXZlM4UFE1ZWk2UjJCK0xWUWJCSUhHUE5sOXRyOEtJUzdJeklvZ3lCN3FGQXpHZmxzSU5NclRFL0F5WmpJQS9DUTJMd3VkcnBjekpuN1pEQVNTNEZTeEdkQTFKYU1OMTlxWWFzQUZWZmlDL0dGSHBHQ0tiQysxdnFxbmhFRVJUYjROZnRHdFJjVVlHUnl5bnhCMlVXa3lVZlVTNXNkZUNxb3RJSDhKK0Ywc2VZSVJPMjBjT01HODRkMHJMVklYcEtHbUl5VmRSNGdtLzBXa05GSVp5UGdmdzdYdjVuQnloWUVBWGVpSlVtcW4gZW1jQENGSnVtcE1lZ2FuCg=="
+    public_key: <%= properties.public_key %>
     instance_type: <%= properties.instance_type || 'm1.small' %>
     <% if properties.key_name %>
     key_name: <%= properties.key_name %>
@@ -56,7 +56,7 @@ resource_pools:
       name: <%= properties.stemcell.name %>
       version: '<%= properties.stemcell.version %>'
     cloud_properties:
-      public_key: "c3NoLXJzYSBBQUFBQjNOemFDMXljMkVBQUFBREFRQUJBQUFCQVFDNklFWnBpOWd3Wi9VUGh0elE4S09VelMwa3ZESzQ4c2V6TDlIN2dQcTNuS3p6aldmcW1JYUZMRHFGazhsbmJJL1haUDJNZXR4OFlsd3JHclFONGRmNHUyWTl4SGhhbEpENFVRcEZyYVZiVVhXZlM4UFE1ZWk2UjJCK0xWUWJCSUhHUE5sOXRyOEtJUzdJeklvZ3lCN3FGQXpHZmxzSU5NclRFL0F5WmpJQS9DUTJMd3VkcnBjekpuN1pEQVNTNEZTeEdkQTFKYU1OMTlxWWFzQUZWZmlDL0dGSHBHQ0tiQysxdnFxbmhFRVJUYjROZnRHdFJjVVlHUnl5bnhCMlVXa3lVZlVTNXNkZUNxb3RJSDhKK0Ywc2VZSVJPMjBjT01HODRkMHJMVklYcEtHbUl5VmRSNGdtLzBXa05GSVp5UGdmdzdYdjVuQnloWUVBWGVpSlVtcW4gZW1jQENGSnVtcE1lZ2FuCg=="
+      public_key: <%= properties.public_key %>
 jobs:
   - name: <%= properties.job || "batlight" %>
     templates: <% (properties.templates || ["batlight"]).each do |template| %>
@@ -76,23 +76,8 @@ jobs:
         - <%= network.static_ip %>
       <% end %>
     <% end %>
-    properties:
-      # Tells agents how to contact nats
-      agent: {mbus: "nats://nats:nats-password@172.31.129.15:4222"}
 
 properties:
-  # mbus: https://mbus:Pbc7ssdfh8w2@172.31.129.15:6868
-  onrack-cpi:
-    apiserver: 10.240.16.85
-    agent:
-      mbus: "nats://nats:nats-password@172.31.129.15:4222"
-      blobstore:
-        provider: dav
-        options:
-          endpoint: http://172.31.129.15:25250
-          user: agent
-          password: agent-password    
-
   batlight:
     <% if properties.batlight.fail %>
     fail: <%= properties.batlight.fail %>

@@ -17,6 +17,7 @@ check_param stemcell_path
 check_param bosh_director_public_ip
 check_param bosh_director_private_ip
 check_param private_key_path
+check_param bosh_public_key
 
 check_param primary_network_cidr
 check_param primary_network_gateway
@@ -32,16 +33,17 @@ properties:
   pool_size: 1
   instances: 1
   uuid: $(bosh status --uuid)
+  public_key: ${bosh_public_key}
   stemcell:
     name: bosh-openstack-kvm-ubuntu-trusty-go_agent-raw
-    version: 3104
+    version: 3126
   networks:
   - name: default
     static_ip: ${primary_network_manual_ip}
     type: manual
     cidr: ${primary_network_cidr}
     reserved: [${bosh_director_private_ip}]
-    static: ${primary_network_range}
+    static: [${primary_network_range}]
     gateway: ${primary_network_gateway}
 EOF
 
@@ -56,4 +58,4 @@ bosh -n target ${bosh_director_public_ip}
 bundle install
 
 echo "run the tests"
-bundle exec rspec spec
+bundle exec rspec spec --tag ~skip
