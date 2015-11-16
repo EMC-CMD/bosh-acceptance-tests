@@ -13,9 +13,9 @@ describe 'network configuration' do
     @requirements.requirement(deployment, @spec) # 2.5 min on local vsphere
   end
 
-  after(:all) do
-    @requirements.cleanup(deployment)
-  end
+  # after(:all) do
+  #   @requirements.cleanup(deployment)
+  # end
 
   describe 'resolving DNS entries' do
     before { skip 'director not configured with dns' unless dns? }
@@ -64,7 +64,7 @@ describe 'network configuration' do
 
     after { manifest_with_different_dns.delete }
 
-    it 'successfully reconfigures VM with new DNS nameservers' do
+    it 'successfully reconfigures VM with new DNS nameservers', do
       expect(bosh("deployment #{manifest_with_different_dns.to_path}")).to succeed
       expect(bosh('deploy')).to succeed
       expect(ssh(public_ip, 'vcap', 'cat /etc/resolv.conf', ssh_options)).to include('127.0.0.5')
@@ -76,7 +76,7 @@ describe 'network configuration' do
       skip "not using manual networking" unless manual_networking?
     end
 
-    it 'changes static IP address', :onrack
+    it 'changes static IP address', :rackhd
 
     it 'deploys multiple manual networks'
   end

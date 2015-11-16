@@ -31,9 +31,12 @@ module Bat
 
     def to_path
       file_name = "#{name}-#{version}.yml"
+      puts(file_name)
       if dev?
+        puts("I AM DEV")
         File.join(@path, 'dev_releases', file_name)
       else
+        puts("I AM NOT DEV")
         File.join(@path, 'releases', file_name)
       end
     end
