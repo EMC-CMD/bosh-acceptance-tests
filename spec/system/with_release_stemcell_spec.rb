@@ -27,6 +27,8 @@ describe 'with release and stemcell and two deployments' do
     end
 
     it 'creates ephemeral and swap partitions on the root device if no ephemeral disk', ssh: true do
+      skip "disk configuration not supported by RackHD" if rackhd?
+
       setting_value = agent_config(public_ip).
         fetch('Platform', {}).
         fetch('Linux', {}).
@@ -81,7 +83,7 @@ describe 'with release and stemcell and two deployments' do
       use_job('colocated')
       use_templates(%w[batarang batlight])
 
-      use_persistent_disk(2048)
+      use_persistent_disk(2048) unless rackhd?
 
       @first_deployment_result = @requirements.requirement(deployment, @spec)
     end
@@ -90,11 +92,11 @@ describe 'with release and stemcell and two deployments' do
       @requirements.cleanup(deployment)
     end
 
-    it 'should set vcap password', ssh: true, :skip => true do
+    it 'should set vcap password', ssh: true do
       expect(ssh_sudo(public_ip, 'vcap', 'whoami', ssh_options)).to eq("root\n")
     end
 
-    it 'should not change the deployment on a noop', :skip => true do
+    it 'should not change the deployment on a noop' do
       deployment_result = bosh('deploy')
       events(get_task_id(deployment_result.output)).each do |event|
         if event['stage']
@@ -103,14 +105,14 @@ describe 'with release and stemcell and two deployments' do
       end
     end
 
-    it 'should use job colocation', ssh: true, :skip => true do
+    it 'should use job colocation', ssh: true do
       @jobs.each do |job|
         grep_cmd = "ps -ef | grep #{job} | grep -v grep"
         expect(ssh(public_ip, 'vcap', grep_cmd, ssh_options)).to match /#{job}/
       end
     end
 
-    it 'should deploy using a static network', ssh: true, :skip => true do
+    it 'should deploy using a static network', ssh: true do
       skip "doesn't work on AWS as the VIP IP isn't visible to the VM" if aws?
       skip "doesn't work on OpenStack as the VIP IP isn't visible to the VM" if openstack?
       skip "doesn't work on Warden as the VIP IP isn't visible to eth0" if warden?
@@ -121,6 +123,7 @@ describe 'with release and stemcell and two deployments' do
       SAVE_FILE = '/var/vcap/store/batarang/save'
 
       before(:all) do
+        skip "persistent disk not supported by RackHD" if rackhd?
         ssh(public_ip, 'vcap', "echo 'foobar' > #{SAVE_FILE}", ssh_options)
         unless warden?
           @size = persistent_disk(public_ip, 'vcap', ssh_options)
@@ -129,7 +132,8 @@ describe 'with release and stemcell and two deployments' do
         @second_deployment_result = @requirements.requirement(deployment, @spec, force: true)
       end
 
-      it 'should migrate disk contents', ssh: true, :skip => true do
+      it 'should migrate disk contents', ssh: true do
+        skip "persistent disk not supported by RackHD" if rackhd?
         # Warden df don't work so skip the persistent disk size check
         unless warden?
           expect(persistent_disk(public_ip, 'vcap', ssh_options)).to_not eq(@size)

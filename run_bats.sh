@@ -58,4 +58,4 @@ bosh -n target ${bosh_director_public_ip}
 bundle install
 
 echo "run the tests"
-bundle exec rspec spec --tag ~skip
+bundle exec rspec spec

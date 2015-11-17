@@ -41,6 +41,10 @@ module Bat
       @env.bat_infrastructure == 'warden'
     end
 
+    def rackhd?
+      @env.bat_infrastructure == 'rackhd'
+    end
+
     def compiled_package_cache?
       info = @bosh_api.info
       info['features'] && info['features']['compiled_package_cache']
