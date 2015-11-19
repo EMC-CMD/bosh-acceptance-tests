@@ -20,7 +20,28 @@ describe 'with release, stemcell and deployment' do
   describe 'agent' do
     it 'should survive agent dying', ssh: true do
       Dir.mktmpdir do |tmpdir|
-        ssh(public_ip, 'vcap', "echo #{@env.vcap_password} | sudo -S pkill -9 agent", ssh_options)
+        private_key = ssh_options[:private_key]
+
+        # Try our best to clean out old host fingerprints for director and vms
+        if File.exist?(File.expand_path('~/.ssh/known_hosts'))
+          Bosh::Exec.sh("ssh-keygen -R '#{@env.director}'")
+          Bosh::Exec.sh("ssh-keygen -R '#{static_ip}'")
+        end
+
+        if private_key
+          bosh_ssh_options = {
+            gateway_host: @env.director,
+            gateway_user: 'vcap',
+            gateway_identity_file: private_key,
+          }.map { |k, v| "--#{k} '#{v}'" }.join(' ')
+
+          # Note gateway_host + ip: ...fingerprint does not match for "micro.ci2.cf-app.com,54.208.15.101" (Net::SSH::HostKeyMismatch)
+          if File.exist?(File.expand_path('~/.ssh/known_hosts'))
+            Bosh::Exec.sh("ssh-keygen -R '#{@env.director},#{static_ip}'")
+          end
+        end
+
+        bosh_safe("echo #{@env.vcap_password} | sudo -S pkill -9 agent")
         wait_for_vm('batlight/0')
         expect(bosh_safe("logs batlight 0 --agent --dir #{tmpdir}")).to succeed
       end
@@ -56,12 +77,12 @@ describe 'with release, stemcell and deployment' do
 
   describe 'job' do
     it 'should recreate a job' do
-      expect(bosh_safe('recreate batlight 0')).to succeed_with /batlight\/0 has been recreated/
+      expect(bosh_safe('recreate batlight 0')).to succeed_with /batlight\/0 recreated/
     end
 
     it 'should stop and start a job' do
-      expect(bosh_safe('stop batlight 0')).to succeed_with /batlight\/0 has been stopped/
-      expect(bosh_safe('start batlight 0')).to succeed_with /batlight\/0 has been started/
+      expect(bosh_safe('stop batlight 0')).to succeed_with /batlight\/0 stopped/
+      expect(bosh_safe('start batlight 0')).to succeed_with /batlight\/0 started/
     end
   end
 
