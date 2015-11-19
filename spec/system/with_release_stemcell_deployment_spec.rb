@@ -41,7 +41,7 @@ describe 'with release, stemcell and deployment' do
           end
         end
 
-        bosh_safe("echo #{@env.vcap_password} | sudo -S pkill -9 agent")
+        bosh_safe("ssh batlight 0 'echo #{@env.vcap_password} | sudo -S pkill -9 agent' #{bosh_ssh_options}")
         wait_for_vm('batlight/0')
         expect(bosh_safe("logs batlight 0 --agent --dir #{tmpdir}")).to succeed
       end
