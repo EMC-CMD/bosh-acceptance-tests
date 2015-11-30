@@ -81,21 +81,13 @@ describe 'network configuration' do
         skip "network reconfiguration does not work for #{@requirements.stemcell}"
       end
 
-      private_key = ssh_options[:private_key]
-      if private_key
-        bosh_ssh_options = {
-          gateway_host: @env.director,
-          gateway_user: 'vcap',
-          gateway_identity_file: private_key,
-        }.map { |k, v| "--#{k} '#{v}'" }.join(' ')
-      end
-
       use_second_static_ip
       deployment = with_deployment
       expect(bosh("deployment #{deployment.to_path}")).to succeed
       expect(bosh('deploy')).to succeed
 
-      expect(bosh_safe("ssh batlight 0 'PATH=/sbin:/usr/sbin:$PATH; ifconfig' #{bosh_ssh_options}").output).to include(second_static_ip)
+      ssh_command = "PATH=/sbin:/usr/sbin:$PATH; ifconfig"
+      expect(bosh_ssh("batlight", 0, ssh_command).output).to include(second_static_ip)
     end
 
     it 'deploys multiple manual networks', :skip => true do

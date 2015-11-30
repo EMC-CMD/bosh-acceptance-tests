@@ -93,7 +93,8 @@ describe 'with release and stemcell and two deployments' do
     end
 
     it 'should set vcap password', ssh: true do
-      expect(ssh_sudo(public_ip, 'vcap', 'whoami', ssh_options)).to eq("root\n")
+      ssh_command = "echo #{@env.vcap_password} | sudo -p '' -S whoami"
+      expect(bosh_ssh('colocated', 0, ssh_command).output).to match /root/
     end
 
     it 'should not change the deployment on a noop' do
@@ -108,7 +109,7 @@ describe 'with release and stemcell and two deployments' do
     it 'should use job colocation', ssh: true do
       @jobs.each do |job|
         grep_cmd = "ps -ef | grep #{job} | grep -v grep"
-        expect(ssh(public_ip, 'vcap', grep_cmd, ssh_options)).to match /#{job}/
+        expect(bosh_ssh('colocated', 0, grep_cmd).output).to match /#{job}/
       end
     end
 
@@ -116,7 +117,7 @@ describe 'with release and stemcell and two deployments' do
       skip "doesn't work on AWS as the VIP IP isn't visible to the VM" if aws?
       skip "doesn't work on OpenStack as the VIP IP isn't visible to the VM" if openstack?
       skip "doesn't work on Warden as the VIP IP isn't visible to eth0" if warden?
-      expect(ssh(public_ip, 'vcap', '/sbin/ifconfig eth0', ssh_options)).to match /#{static_ip}/
+      expect(bosh_ssh('colocated', 0, '/sbin/ifconfig eth0').output).to match /#{static_ip}/
     end
 
     context 'second deployment' do
@@ -124,7 +125,7 @@ describe 'with release and stemcell and two deployments' do
 
       before(:all) do
         skip "persistent disk not supported by RackHD" if rackhd?
-        ssh(public_ip, 'vcap', "echo 'foobar' > #{SAVE_FILE}", ssh_options)
+        bosh_ssh('colocated', 0, "echo 'foobar' > #{SAVE_FILE}")
         unless warden?
           @size = persistent_disk(public_ip, 'vcap', ssh_options)
         end
