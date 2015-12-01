@@ -60,8 +60,8 @@ module Bat
       info['features']['dns']['extras']['domain_name'] if dns?
     end
 
-    def persistent_disk(host, user, options = {})
-      get_disks(host, user, options).each do |disk|
+    def persistent_disk(job, index)
+      get_disks(job, index).each do |disk|
         values = disk.last
         if values[:mountpoint] == '/var/vcap/store'
           return values[:blocks]
@@ -172,7 +172,7 @@ module Bat
       disks = {}
       df_cmd = 'df -x tmpfs -x devtmpfs -x debugfs -l | tail -n +2'
 
-      df_output = bosh_ssh('colocated', 0, df_cmd)
+      df_output = bosh_ssh(job, index, df_cmd)
       df_output.split("\n").each do |line|
         fields = line.split(/\s+/)
         disks[fields[0]] = {
