@@ -27,8 +27,6 @@ describe 'with release and stemcell and two deployments' do
     end
 
     it 'creates ephemeral and swap partitions on the root device if no ephemeral disk', ssh: true do
-      skip "disk configuration not supported by RackHD" if rackhd?
-
       setting_value = agent_config(public_ip).
         fetch('Platform', {}).
         fetch('Linux', {}).
@@ -92,12 +90,12 @@ describe 'with release and stemcell and two deployments' do
       @requirements.cleanup(deployment)
     end
 
-    it 'should set vcap password', ssh: true do
+    it 'should set vcap password', ssh: true, core: true do
       ssh_command = "echo #{@env.vcap_password} | sudo -p '' -S whoami"
       expect(bosh_ssh('colocated', 0, ssh_command).output).to match /root/
     end
 
-    it 'should not change the deployment on a noop' do
+    it 'should not change the deployment on a noop', core: true do
       deployment_result = bosh('deploy')
       events(get_task_id(deployment_result.output)).each do |event|
         if event['stage']
@@ -106,14 +104,14 @@ describe 'with release and stemcell and two deployments' do
       end
     end
 
-    it 'should use job colocation', ssh: true do
+    it 'should use job colocation', ssh: true, core: true do
       @jobs.each do |job|
         grep_cmd = "ps -ef | grep #{job} | grep -v grep"
         expect(bosh_ssh('colocated', 0, grep_cmd).output).to match /#{job}/
       end
     end
 
-    it 'should deploy using a static network', ssh: true do
+    it 'should deploy using a static network', ssh: true, core: true do
       skip "doesn't work on AWS as the VIP IP isn't visible to the VM" if aws?
       skip "doesn't work on OpenStack as the VIP IP isn't visible to the VM" if openstack?
       skip "doesn't work on Warden as the VIP IP isn't visible to eth0" if warden?
@@ -124,20 +122,18 @@ describe 'with release and stemcell and two deployments' do
       SAVE_FILE = '/var/vcap/store/batarang/save'
 
       before(:all) do
-        skip "persistent disk not supported by RackHD" if rackhd?
         bosh_ssh('colocated', 0, "echo 'foobar' > #{SAVE_FILE}")
         unless warden?
-          @size = persistent_disk(public_ip, 'vcap', ssh_options)
+          @size = persistent_disk('colocated', 0)
         end
         use_persistent_disk(4096)
         @second_deployment_result = @requirements.requirement(deployment, @spec, force: true)
       end
 
       it 'should migrate disk contents', ssh: true do
-        skip "persistent disk not supported by RackHD" if rackhd?
         # Warden df don't work so skip the persistent disk size check
         unless warden?
-          expect(persistent_disk(public_ip, 'vcap', ssh_options)).to_not eq(@size)
+          expect(persistent_disk('colocated', 0)).to_not eq(@size)
         end
         expect(ssh(public_ip, 'vcap', "cat #{SAVE_FILE}", ssh_options)).to match /foobar/
       end
