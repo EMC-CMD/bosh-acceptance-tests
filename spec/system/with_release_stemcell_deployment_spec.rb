@@ -30,7 +30,7 @@ describe 'with release, stemcell and deployment', core: true do
 
   describe 'ssh' do
     it 'can bosh ssh into a vm' do
-      expect(bosh_ssh('batlight', 0, "'uname -a' #{bosh_ssh_options}").output).to succeed_with /Linux/
+      expect(bosh_ssh('batlight', 0, "uname -a").output).to succeed_with /Linux/
     end
   end
 
