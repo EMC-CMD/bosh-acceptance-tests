@@ -175,7 +175,7 @@ module Bat
       disks = {}
       df_cmd = 'df -x tmpfs -x devtmpfs -x debugfs -l | tail -n +2'
 
-      df_output = bosh_ssh(job, index, df_cmd)
+      df_output = bosh_ssh(job, index, df_cmd).output
       df_output.split("\n").each do |line|
         fields = line.split(/\s+/)
         disks[fields[0]] = {

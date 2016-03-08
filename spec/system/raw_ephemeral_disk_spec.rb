@@ -27,11 +27,7 @@ describe 'raw_instance_storage', raw_ephemeral_disk: true do
 
   it 'should attach all available instance disks and label them', ssh: true do
     # assumes aws.yml.erb specifies instance_type: m3.medium, which has 1 local disk
-    expect(labeled_partitions()).to eq(["raw-ephemeral-0"])
-  end
-
-  def labeled_partitions
     output = bosh_ssh('batlight', 0, 'ls /dev/disk/by-partlabel').output
-    output.lines.map { |line| line.chomp }
+    expect(output).to include('raw-ephemeral-0')
   end
 end
